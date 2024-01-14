@@ -1,5 +1,6 @@
 import { useSelector } from "react-redux";
 import { useRef, useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   getDownloadURL,
   getStorage,
@@ -11,6 +12,10 @@ import {
   updateUserStart,
   updateUserFailure,
   updateUserSuccess,
+  deleteUserFailure,
+  deleteUserStart,
+  deleteUserSuccess,
+  signOutUserStart,
 } from "../redux/user/userSlice.js";
 import { useDispatch } from "react-redux";
 
@@ -73,7 +78,7 @@ const Profile = () => {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-      if ((data.success = false)) {
+      if (data.success === false) {
         dispatch(updateUserFailure(data.message));
         return;
       }
@@ -84,8 +89,37 @@ const Profile = () => {
     }
   };
 
-  console.log(formData);
-  console.log(currentUser);
+  const handleDeleteUser = async (e) => {
+    try {
+      dispatch(deleteUserStart());
+      const res = await fetch(`/api/user/delete/${currentUser._id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success === false) {
+        dispatch(deleteUserFailure(data.message));
+        return;
+      }
+      dispatch(deleteUserSuccess(data));
+    } catch (error) {
+      dispatch(deleteUserFailure(error.message));
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      dispatch(signOutUserStart());
+      const res = await fetch("/api/auth/signout");
+      const data = await res.json();
+      if (data.success === false) {
+        dispatch(deleteUserFailure(data.message));
+        return;
+      }
+      dispatch(deleteUserSuccess(data));
+    } catch (error) {
+      dispatch(deleteUserFailure(data.message));
+    }
+  };
 
   return (
     <div className="p-3 max-w-lg mx-auto">
@@ -104,7 +138,7 @@ const Profile = () => {
           className="rounded-full h-24 w-24 object-cover cursor-pointer self-center mt-2"
           onClick={() => fileRef.current.click()}
         />
-        <p className="text-center">
+        <p className="text-sm self-center">
           {fileUploadError ? (
             <span className="text-red-700">
               Error Image upload (image must be less thab 2 mb)
@@ -148,10 +182,16 @@ const Profile = () => {
         </button>
       </form>
       <div className="flex justify-between mt-5">
-        <span className="text-red-700 cursor-pointer font-semibold">
+        <span
+          onClick={handleDeleteUser}
+          className="text-red-700 cursor-pointer font-semibold"
+        >
           Delete Account
         </span>
-        <span className="text-red-700 cursor-pointer font-semibold">
+        <span
+          onClick={handleSignOut}
+          className="text-red-700 cursor-pointer font-semibold"
+        >
           Sign out
         </span>
       </div>
